@@ -2,7 +2,7 @@
 
 namespace ToDoList.Models.DTOs;
 
-public class ToDoDTO
+public class ToDoDto
 {
     public Guid Id { get; set; }
     public string Title { get; set; }

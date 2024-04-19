@@ -1,10 +1,27 @@
 using System.Text.Json.Serialization;
+using DotNetEnv;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
 using ToDoList.Database;
+using ToDoList.Exceptions;
 using ToDoList.Extensions;
 
 var builder = WebApplication.CreateBuilder(args);
+
+Env.Load(".env");
+
+var MyAllowSpecificOrigins = "_myAllowSpecificOrigins";
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy(name: MyAllowSpecificOrigins,
+        policy =>
+        {
+            policy
+                .AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod();
+        });
+});
+
+builder.Services.AddDbContext<TodoContext>(options => options.UseInMemoryDatabase("tododb"));
 
 builder.Services.AddControllers().AddJsonOptions(options =>
 {
@@ -18,11 +35,15 @@ builder.Services.AddSwaggerGen(c =>
         Description = "ToDo List API", 
         Version = "v1"});
 });
-builder.Services.AddDbContext<TodoContext>(options => options.UseInMemoryDatabase("tododb"));
 
+builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 builder.Services.AddToDoListServices();
 
 var app = builder.Build();
+
+app.UseCors(MyAllowSpecificOrigins);
+
+app.UseMiddleware<ExceptionMiddleware>();
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
